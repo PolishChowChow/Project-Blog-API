@@ -1,7 +1,8 @@
-const mongoose = require("mongoose")
+const mongoose = require("mongoose");
+const { likesType, timeStampType } = require("./typesForModels");
 const Schema = mongoose.Schema;
 
-const postSchema = new Schema({
+const commentSchema = new Schema({
     content: {
         type: String,
         required: true,
@@ -18,7 +19,8 @@ const postSchema = new Schema({
         ref: 'Post',
         type: Schema.ObjectId
     },
-    createdAt: timeStampType
+    createdAt: timeStampType,
+    likes: likesType,
 })
-const Post = mongoose.model('Post', postSchema)
-module.exports = Post;
+const Comment = mongoose.model('Comment', commentSchema)
+module.exports = Comment;

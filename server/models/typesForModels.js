@@ -1,3 +1,6 @@
+const mongoose = require("mongoose");
+const Schema = mongoose.Schema;
+
 exports.defaultStringType = {
     minLength: 7,
     maxLength: 50,
@@ -8,3 +11,7 @@ exports.timeStampType = {
     type: Date,
     default: new Date(),
 }
+exports.likesType = [{
+    ref: 'User',
+    type: Schema.ObjectId,
+}]
