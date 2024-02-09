@@ -10,7 +10,7 @@ const opt = {
 module.exports = new JwtStrategy(opt, async(jwt_payload, done) => {
     const user = await User.findOne({username: jwt_payload.username})
     if(user !== undefined && user !== null){
-        return done(null, true)
+        return done(null, user)
     }
     return done(null, false)
 })

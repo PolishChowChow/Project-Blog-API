@@ -13,5 +13,5 @@ exports.timeStampType = {
 }
 exports.likesType = [{
     ref: 'User',
-    type: Schema.ObjectId,
+    type: Schema.Types.ObjectId,
 }]

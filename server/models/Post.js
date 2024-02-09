@@ -28,5 +28,12 @@ const postSchema = new Schema({
     createdAt: timeStampType,
     likes: likesType,
 })
+postSchema.virtual("url").get(function(){
+    return `/posts/${this._id}`
+})
+postSchema.virtual("comments_url").get(function(){
+    return `blog/posts/${this.id}/comments`
+})
+postSchema.set('toJSON', { virtuals: true });
 const Post = mongoose.model('Post', postSchema)
 module.exports = Post;

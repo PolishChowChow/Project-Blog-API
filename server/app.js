@@ -11,6 +11,8 @@ const blogRouter = require("./routes/blog");
 const cors = require("cors");
 const app = express();
 const jwtStrategy = require("./controllers/jtwStrategy")
+
+//connection with db
 mongoose.connect(process.env.CONNECTION_STRING)
 
 
@@ -20,11 +22,19 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+
+//setting up passport to work with jwtStrategy
+passport.initialize()
 passport.use(jwtStrategy)
+
+//setting content-type for all responses
+app.use((req, res, next) => {
+  res.set('Content-Type', 'application/json');
+  next();
+});
 app.use('/', indexRouter);
 
 app.use('/blog', blogRouter);
-// app.use(passport.authenticate('jwt', {session: false}))
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
@@ -37,7 +47,7 @@ app.use(function(err, req, res, next) {
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
   // send status
-  res.sendStatus(err.status || 500)
+  return res.sendStatus(err.status || 500)
 });
 
 module.exports = app;
