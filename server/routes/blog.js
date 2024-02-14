@@ -14,13 +14,12 @@ router.get('/posts/:postId/comments/:commentId',get_specific_comment)
 router.use(passport.authenticate('jwt', {session: false}))
 router.use(verify_userId_with_token)
 
-router.route('/posts', create_new_post)
+router.post('/posts', create_new_post)
 router.route('/posts/:postId')
   .delete(delete_specific_post)
   .put(update_specific_post)
 
-router.route('/posts/:postId/comments')
-  .post(create_new_comment)
+router.post('/posts/:postId/comments', create_new_comment)
   
 router.route('/posts/:postId/comments/:commentId')
   .delete(delete_specific_comment)

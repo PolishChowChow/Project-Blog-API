@@ -34,7 +34,7 @@ exports.get_specific_post = asyncHandler(async (req, res, next) => {
     });
   }
 });
-exports.create_new_post = asyncHandler(async (req, res, next) => {
+exports.create_new_post =async (req, res, next) => {
   if (!req.user) {
     res.status(401).json({
       message: "User is not authorize, access denied",
@@ -48,6 +48,7 @@ exports.create_new_post = asyncHandler(async (req, res, next) => {
       author: req.user,
       createdAt: new Date(),
       likes: [],
+      is_published: true,
     });
     console.log(post);
     await post.save();
@@ -55,7 +56,7 @@ exports.create_new_post = asyncHandler(async (req, res, next) => {
       message: "post created successfully",
     });
   }
-});
+};
 exports.update_specific_post = asyncHandler(async (req, res, next) => {
   const updatedData = req.body;
   const updatedPost = await Post.findByIdAndUpdate(

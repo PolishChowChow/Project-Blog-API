@@ -2,12 +2,13 @@ import axios from "axios";
 import { useQueryClient, useMutation } from "react-query";
 import getCookiesData from "../../functions/getCookiesData";
 import ComponentProps from "../../types/ComponentProps";
-import { ExtendedPostProps, like } from "../../types/PostProps";
+import { ExtendedPostProps } from "../../types/PostProps";
 import LikeComponent from "../LikeComponent";
 import StyledLink from "../StyledLink";
 import PostContainer from "./PostContainer";
 import Button from "../Form/Button";
 import { Link } from "react-router-dom";
+import useApiContext from "../../context/useApiContext";
 type PostComponentProps = {
   post: ExtendedPostProps;
   removeAbility: boolean;
@@ -17,34 +18,9 @@ function Post({
   classNames,
   removeAbility = false,
 }: PostComponentProps & ComponentProps) {
-
   const { title, author, content, likes, url } = post;
   const { userId, token } = getCookiesData();
-
-
-  const handleLikes = async () => {
-    let newLikesList: like[] = [];
-    if (userId && post.likes.includes(userId)) {
-      newLikesList = post.likes.filter((like) => {
-        return like !== userId;
-      });
-    } else if (userId) {
-      newLikesList = [...post.likes, userId];
-    }
-    const response = await axios.put(
-      `http://localhost:5000/blog/posts/${post._id}`,
-      {
-        likes: newLikesList,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          userId: userId,
-        },
-      }
-    );
-    return response;
-  };
+  const { handlePostLikes } = useApiContext()
 
   const handleDelete = async() => {
     const response = await axios.delete(`http://localhost:5000/blog/posts/${post._id}`,{
@@ -83,7 +59,7 @@ function Post({
     }
   })
   const { mutateAsync: manageLike } = useMutation({
-    mutationFn: handleLikes,
+    mutationFn: () => handlePostLikes(post),
     onSuccess: () => {
       queryClient.invalidateQueries(["posts"]);
     },

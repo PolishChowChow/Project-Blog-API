@@ -13,6 +13,7 @@ import RegisterForm from './components/Form/RegisterForm'
 import Panel from './components/Panel'
 import CommentsForPanel from './components/Comments/CommentsForPanel'
 import CommentForm from './components/Form/CommentForm'
+import ApiContextProvider from './context/apiContext'
 const router = createBrowserRouter([
   {
     path: "/",
@@ -24,7 +25,7 @@ const router = createBrowserRouter([
         element: <PostsList />,
       },
       {
-        path: "/posts/:id",
+        path: "/posts/:postId",
         element: <PostDetails />
       },
       {
@@ -44,15 +45,15 @@ const router = createBrowserRouter([
         element: <Panel />,
       },
       {
-        path: "/panel/:id",
+        path: "/panel/:postId",
         element: <PostForm role='edit'/>
       },
       {
-        path: "/panel/:id/comments",
+        path: "/panel/:postId/comments",
         element: <CommentsForPanel />
       },
       {
-        path: "/panel/:id/comments/:commentId",
+        path: "/panel/:postId/comments/:commentId",
         element: <CommentForm />
       }
     ]
@@ -65,7 +66,9 @@ const client = new QueryClient()
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={client}>
-      <RouterProvider router={router} />
+      <ApiContextProvider>
+        <RouterProvider router={router} />
+      </ApiContextProvider>
     </QueryClientProvider>
   </React.StrictMode>,
 )

@@ -1,6 +1,6 @@
 import { ChangeEvent, FormEvent, useState } from "react";
 import InputField from "./InputField";
-import axios, { AxiosError, AxiosResponse } from "axios";
+import { AxiosError, AxiosResponse } from "axios";
 import { useNavigate } from "react-router-dom";
 import FormContainer from "./FormContainer";
 import FormHeader from "./FormHeader";
@@ -9,11 +9,9 @@ import LoadingCircle from "../StateShowing/LoadingCircle";
 import ErrorMessage from "../StateShowing/ErrorMessage";
 import SubmitButton from "./SubmitButton";
 import setProperError from "../../functions/setProperError";
-import setCookies from "../../functions/setCookies";
-type LoginData = {
-  username: string;
-  password: string;
-};
+import { LoginData } from "../../types/LoginTypes";
+import useApiContext from "../../context/useApiContext";
+
 
 const defaultData: LoginData = {
   username: "",
@@ -25,13 +23,9 @@ const defaultData: LoginData = {
 function LoginForm() {
   const [loginData, setLoginData] = useState<LoginData>(defaultData);
   const navigate = useNavigate()
+  const {handleLogin} = useApiContext()
   const {mutateAsync: handleLoginAction, error, isLoading} = useMutation<AxiosResponse,AxiosError>({
-    mutationFn: async () => {
-        const response = await axios.post("http://localhost:5000/login", loginData);
-        const { token, userId }  = response.data;
-        setCookies(token, userId)
-        return response;
-    },
+    mutationFn: () => handleLogin(loginData),
     onSuccess: () =>{
       setLoginData(defaultData);
       navigate('/')
@@ -42,7 +36,7 @@ function LoginForm() {
   })
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    handleLoginAction()
+    await handleLoginAction()
   };
   const onChange = (e: ChangeEvent<HTMLInputElement>) => {
     setLoginData((prevLoginData) => {

@@ -5,50 +5,47 @@ import SubmitButton from "./SubmitButton";
 import FormHeader from "./FormHeader";
 import { useMutation, useQuery } from "react-query";
 import { useNavigate, useParams } from "react-router-dom";
-import axios from "axios";
-import getCookiesData from "../../functions/getCookiesData";
+import { AxiosError, AxiosResponse } from "axios";
+import useApiContext from "../../context/useApiContext";
+import LoadingCircle from "../StateShowing/LoadingCircle";
+import setProperError from "../../functions/setProperError";
+import ErrorMessage from "../StateShowing/ErrorMessage";
+import { CommentType } from "../../types/CommentProps";
 
 function CommentForm() {
-  const { id, commentId } = useParams();
-  const { token, userId } = getCookiesData()
+  const { postId, commentId } = useParams();
+  const { getSpecificComment, editComment } = useApiContext();
   const navigate = useNavigate();
   const [comment, setComment] = useState("");
-  const query = useQuery({
-    queryFn: async() => {
-        const response = await axios.get(`http://localhost:5000/blog/posts/${id}/comments/${commentId}`)
-        return response.data.comment
-    },
+  const { error: getRequestError, isLoading: isLoadingGetRequest } = useQuery<CommentType,AxiosError>({
+    queryFn: () => getSpecificComment(postId, commentId),
     queryKey: ["comment", commentId],
     onSuccess: (data) => {
-        setComment(() =>{
-            if(data === undefined){
-                return ""
-            }
-            return data.content;
-        })
+      setComment(() => {
+        if (data === undefined) {
+          return "";
+        }
+        return data.content;
+      });
+    },
+    onError: (error) => {
+      error.message = setProperError(error)
     }
   });
 
-  const {mutateAsync: handleCommentEdit} = useMutation({
-    mutationFn: async() => {
-        const response = await axios.put(`http://localhost:5000/blog/posts/${id}/comments/${commentId}`,{
-            content: comment
-        },
-        {
-            headers: {
-                Authorization: `Bearer ${token}`,
-                userId: userId
-              },
-        })
-        return response
-    },
-    onSuccess: () => {
-        navigate(`/panel/${id}/comments`)
-    }
-  })
+  const { mutateAsync: handleCommentEdit, isLoading: isLoadingPutRequest, error: putRequestError } =
+    useMutation<AxiosResponse, AxiosError>({
+      mutationFn: () => editComment(postId, commentId, comment),
+      onSuccess: () => {
+        navigate(`/panel/${postId}/comments`);
+      },
+      onError: (error) => {
+        error.message = setProperError(error)
+      }
+    });
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    handleCommentEdit()
+    handleCommentEdit();
   };
   const handleCommentChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
     setComment(e.target.value);
@@ -56,13 +53,25 @@ function CommentForm() {
 
   return (
     <FormContainer onSubmit={handleSubmit}>
-      <FormHeader>Edit Comment</FormHeader>
-      <TextAreaField
-        id="comment"
-        value={comment}
-        onChange={handleCommentChange}
-      />
-      <SubmitButton>Save changes</SubmitButton>
+      {isLoadingGetRequest ? (
+        <LoadingCircle />
+      ) : (
+        <>
+          <FormHeader>Edit Comment</FormHeader>
+          <TextAreaField
+            id="comment"
+            value={comment}
+            onChange={handleCommentChange}
+          />
+        </>
+      )}
+      {isLoadingPutRequest ? (
+        <LoadingCircle />
+      ) : (
+        <SubmitButton>Save changes</SubmitButton>
+      )}
+      {getRequestError && <ErrorMessage>{getRequestError.message}</ErrorMessage>}
+      {putRequestError && <ErrorMessage>{putRequestError.message}</ErrorMessage>}
     </FormContainer>
   );
 }

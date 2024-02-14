@@ -3,132 +3,82 @@ import FormContainer from "../Form/FormContainer";
 import FormHeader from "../Form/FormHeader";
 import InputField from "../Form/InputField";
 import TextAreaField from "../Form/TextAreaField";
-import axios, { AxiosError, AxiosResponse } from "axios";
+import { AxiosError, AxiosResponse } from "axios";
 import { useNavigate, useParams } from "react-router-dom";
 import SubmitButton from "../Form/SubmitButton";
-import {  useMutation, useQuery } from "react-query";
+import { useMutation, useQuery } from "react-query";
 import ErrorMessage from "../StateShowing/ErrorMessage";
 import LoadingCircle from "../StateShowing/LoadingCircle";
-import {  PostProps } from "../../types/PostProps";
+import { PostProps } from "../../types/PostProps";
 import setProperError from "../../functions/setProperError";
-import getCookiesData from "../../functions/getCookiesData";
+import useApiContext from "../../context/useApiContext";
 type postFormProps = {
-  role?: string
-}
-const emptyFormData:PostProps = {
-  title:"",
-  content:""
-}
-const handlePostCreateFn = async (formData: PostProps) => {
-  const {token, userId} = getCookiesData()
-  if (!token) {
-    throw new Error("access denied, no token");
-  } else {
-    const response = await axios.post(
-      "http://localhost:5000/blog/posts",
-      formData,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          userId: userId
-        },
-      }
-    );
-    return response;
-  }
+  role?: string;
+};
+const emptyFormData: PostProps = {
+  title: "",
+  content: "",
 };
 
-
-
-
-function PostForm({role="create"}:postFormProps) {
-
-
-
-  
-  const { id:postId } = useParams()
+function PostForm({ role = "create" }: postFormProps) {
+  const { id: postId } = useParams();
   const navigate = useNavigate();
-
-  const prefetchEditedPost = async() => {
-    const response = await axios.get(`http://localhost:5000/blog/posts/${postId}`)
-    const returnedPost:PostProps = {
-        title: response.data.post.title,
-        content: response.data.post.content
-      }
-    return returnedPost
-  }
-
-
+  const {
+    getPostDataToModify: prefetchEditedPost,
+    createPost,
+    editPost,
+  } = useApiContext();
 
   const { error: fetchError } = useQuery<PostProps, AxiosError>({
     queryKey: ["post", postId],
-    queryFn: prefetchEditedPost,
-    enabled: role === "edit", 
+    queryFn: () => prefetchEditedPost(postId),
+    enabled: role === "edit",
     onSuccess: (data) => {
-      setFormData(data || emptyFormData); 
+      setFormData(data || emptyFormData);
     },
     onError: (error) => {
       error.message = setProperError(error);
     },
   });
 
-
-  const handlePostEditFn = async (formData: PostProps) => {
-    const {token, userId} = getCookiesData()
-    if (!token) {
-      throw new Error("access denied, no token");
-    } else {
-      const response = await axios.put(
-        `http://localhost:5000/blog/posts/${postId}`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            userId: userId
-          },
-        }
-      );
-      return response;
-    }
-  }
-
   const {
     mutateAsync: handlePostCreate,
     isLoading,
     error,
-  } = useMutation<AxiosResponse<unknown, unknown>, AxiosError, PostProps, PostProps>({
-    mutationFn: handlePostCreateFn,
+  } = useMutation<AxiosResponse, AxiosError, PostProps, PostProps>({
+    mutationFn: () => createPost(formData),
     onSuccess: () => {
       navigate("/");
     },
-    onError: (error) =>{
-        error.message = setProperError(error)
-    }
+    onError: (error) => {
+      error.message = setProperError(error);
+    },
   });
-  const { mutateAsync: handleEditPost, isLoading: isEditLoading, error: editError } = useMutation<AxiosResponse<PostProps, string>, AxiosError, PostProps>(
-    {
-      mutationFn: handlePostEditFn, 
-      onSuccess: () => {
-        navigate("/panel");
-      },
-      onError: (error: AxiosError) => {
-        error.message = setProperError(error);
-      }
-    }
-  );
-  
+  const {
+    mutateAsync: handleEditPost,
+    isLoading: isEditLoading,
+    error: editError,
+  } = useMutation<AxiosResponse<PostProps, string>, AxiosError, PostProps>({
+    mutationFn: () => editPost(formData, postId),
+    onSuccess: () => {
+      navigate("/panel");
+    },
+    onError: (error: AxiosError) => {
+      error.message = setProperError(error);
+    },
+  });
 
   const [formData, setFormData] = useState(emptyFormData);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if(role === "edit"){
-      await handleEditPost(formData)
-      navigate("/panel")
-    }
-    else{
+    console.log(role)
+    if (role === "edit") {
+      await handleEditPost(formData);
+      navigate("/panel");
+    } else {
       await handlePostCreate(formData);
-      navigate("/")
+      navigate("/");
     }
   };
   const handleInputChange = (
@@ -154,7 +104,9 @@ function PostForm({role="create"}:postFormProps) {
         onChange={handleInputChange}
         value={formData.content}
       />
-      <SubmitButton classNames="w-full">{role === "edit" ? "Save Changes" : "Add a post"}</SubmitButton>
+      <SubmitButton classNames="w-full">
+        {role === "edit" ? "Save Changes" : "Add a post"}
+      </SubmitButton>
       {error && <ErrorMessage>{error.message}</ErrorMessage>}
       {isLoading && <LoadingCircle />}
       {editError && <ErrorMessage>{editError.message}</ErrorMessage>}
