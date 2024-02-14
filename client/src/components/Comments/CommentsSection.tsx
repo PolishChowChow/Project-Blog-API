@@ -1,4 +1,4 @@
-import axios, { AxiosError, AxiosResponse } from "axios";
+import { AxiosError, AxiosResponse } from "axios";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import { CommentType } from "../../types/CommentProps";
 import setProperError from "../../functions/setProperError";
@@ -9,6 +9,7 @@ import { FormEvent, useState } from "react";
 import SubmitButton from "../Form/SubmitButton";
 import TextAreaField from "../Form/TextAreaField";
 import getCookiesData from "../../functions/getCookiesData";
+import useApiContext from "../../context/useApiContext";
 
 type CommentsListProps = {
   postId: string;
@@ -17,36 +18,14 @@ type CommentsListProps = {
 function CommentsSection({ postId }: CommentsListProps) {
   const queryClient = useQueryClient();
   const [content, setContent] = useState("");
-  const { token, userId } = getCookiesData();
-
-  const createNewComment = async () => {
-    console.log(content);
-    const response = await axios.post(
-      `http://localhost:5000/blog/posts/${postId}/comments`,
-      {
-        content: content,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          userId: userId,
-        },
-      }
-    );
-    return response;
-  };
-
+  const { token } = getCookiesData();
+  const { getAllComments, createComment } = useApiContext()
   const {
     data: comments,
     error,
     isLoading,
   } = useQuery<CommentType[], AxiosError>({
-    queryFn: async () => {
-      const response = await axios.get(
-        `http://localhost:5000/blog/posts/${postId}/comments`
-      );
-      return response.data.comments;
-    },
+    queryFn: () => getAllComments(postId),
     queryKey: [`post/${postId}/comments`],
     onError: (error) => {
       error.message = setProperError(error);
@@ -57,7 +36,7 @@ function CommentsSection({ postId }: CommentsListProps) {
     AxiosResponse,
     AxiosError
   >({
-    mutationFn: createNewComment,
+    mutationFn: () => createComment(postId, content),
     onSuccess: () => {
       queryClient.invalidateQueries([`post/${postId}/comments`]);
     },
@@ -69,7 +48,6 @@ function CommentsSection({ postId }: CommentsListProps) {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     await addComment();
-    console.log("after adding");
     setContent("");
   };
 

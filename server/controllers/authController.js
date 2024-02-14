@@ -85,6 +85,7 @@ exports.logout_middleware = (req, res, next) => {
 
 exports.verify_userId_with_token = (req, res, next) => {
   const userId = req.headers.userid;
+  console.log(req.user.id, userId)
   if(req.user.id === userId){
     return next()
   }

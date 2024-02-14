@@ -1,59 +1,28 @@
 import { useMutation, useQueryClient } from "react-query";
 import { CommentType } from "../../types/CommentProps";
 import LikeComponent from "../LikeComponent";
-import axios from "axios";
-import { like } from "../../types/PostProps";
 import getCookiesData from "../../functions/getCookiesData";
 import { Link } from "react-router-dom";
 import Button from "../Form/Button";
+import useApiContext from "../../context/useApiContext";
 type CommentComponentType = {
   comment: CommentType;
   removeAbility?: boolean;
 };
 function Comment({ comment, removeAbility = false }: CommentComponentType) {
-  const { userId, token } = getCookiesData();
+  const { userId } = getCookiesData();
+  const { deleteComment, handleCommentLikes } = useApiContext()
   const queryClient = useQueryClient();
-  const handleLikes = async () => {
-    let newLikesList: like[] = [];
-    if (userId && comment.likes.includes(userId)) {
-      newLikesList = comment.likes.filter((like) => {
-        return like !== userId;
-      });
-    } else if (userId) {
-      newLikesList = [...comment.likes, userId];
-    }
-    const response = await axios.put(
-      `http://localhost:5000/blog/posts/${comment.post}/comments/${comment._id}`,
-      {
-        likes: newLikesList,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          userId: userId,
-        },
-      }
-    );
-    return response;
-  };
-  const handleDelete = async() => {
-    const response = await axios.delete(`http://localhost:5000/blog/posts/${comment.post}/comments/${comment._id}`,{
-      headers: {
-        Authorization: `Bearer ${token}`,
-        userId: userId
-      },
-    })
-    return response
-  }
+
   
   const { mutateAsync: manageLike } = useMutation({
-    mutationFn: handleLikes,
+    mutationFn: () => handleCommentLikes(comment),
     onSuccess: () => {
       queryClient.invalidateQueries([`post/${comment.post}/comments`]);
     },
   });
   const { mutateAsync: manageDelete } = useMutation({
-    mutationFn: handleDelete,
+    mutationFn: () => deleteComment(comment.post._id, comment._id),
     onSuccess: () => {
       queryClient.invalidateQueries([`post/${comment.post}/comments`]);
     },

@@ -1,4 +1,4 @@
-import axios from "axios";
+
 import { useQueryClient, useMutation } from "react-query";
 import getCookiesData from "../../functions/getCookiesData";
 import ComponentProps from "../../types/ComponentProps";
@@ -18,42 +18,18 @@ function Post({
   classNames,
   removeAbility = false,
 }: PostComponentProps & ComponentProps) {
-  const { title, author, content, likes, url } = post;
-  const { userId, token } = getCookiesData();
-  const { handlePostLikes } = useApiContext()
-
-  const handleDelete = async() => {
-    const response = await axios.delete(`http://localhost:5000/blog/posts/${post._id}`,{
-      headers: {
-        Authorization: `Bearer ${token}`,
-        userId: userId
-      },
-    })
-    return response
-  }
-
-  const handleDeleteButton = () => {
-    manageDelete()
-  };
+  const { _id, title, author, content, likes, url } = post;
+  const { userId } = getCookiesData();
+  const { handlePostLikes, deletePost, handlePublishedPosts } = useApiContext()
   const queryClient = useQueryClient();
   const { mutateAsync: manageDelete } = useMutation({
-    mutationFn: handleDelete,
+    mutationFn: () => deletePost(_id),
     onSuccess: () =>{
       queryClient.invalidateQueries(["posts"]);
     }
   })
   const {mutateAsync: handleEdit} = useMutation({
-    mutationFn: async() => {
-      const response = await axios.put(`http://localhost:5000/blog/posts/${post._id}`,{
-        is_published: !post.is_published
-      },{
-        headers: {
-          Authorization: `Bearer ${token}`,
-          userId: userId
-        },
-      })
-      return response
-    },
+    mutationFn: () => handlePublishedPosts(post),
     onSuccess: () =>{
       queryClient.invalidateQueries(["posts"]);
     }
@@ -64,12 +40,6 @@ function Post({
       queryClient.invalidateQueries(["posts"]);
     },
   });
-  const handleLikeClick = () => {
-    manageLike();
-  };
-  const handlePublishedButton = () =>{
-    handleEdit()
-  }
   return (
     <PostContainer classNames={classNames}>
       <div className="text-lg grow">
@@ -81,7 +51,7 @@ function Post({
       <div className="flex gap-1">
         {removeAbility ? (
           <>
-            <Button classNames="bg-red-500 border-red-500 hover:bg-red-600 hover:border-red-600" onClick={handleDeleteButton}>
+            <Button classNames="bg-red-500 border-red-500 hover:bg-red-600 hover:border-red-600" onClick={manageDelete}>
               Delete post
             </Button>
             <Link to={`/panel/${post._id}`}>
@@ -92,12 +62,12 @@ function Post({
             <Link to={`/panel/${post._id}/comments`}>
               <Button>Show Comments</Button>
             </Link>
-            {post.is_published ? <Button onClick={handlePublishedButton} classNames="bg-green-500 border-green-500 hover:bg-green-600 hover:border-green-600">Published</Button> : <Button onClick={handlePublishedButton} classNames="bg-yellow-500 border-yellow-500 hover:bg-yellow-600 hover:border-yellow-600">Not Published</Button>}
+            {post.is_published ? <Button onClick={handleEdit} classNames="bg-green-500 border-green-500 hover:bg-green-600 hover:border-green-600">Published</Button> : <Button onClick={handleEdit} classNames="bg-yellow-500 border-yellow-500 hover:bg-yellow-600 hover:border-yellow-600">Not Published</Button>}
           </>
         ) : (
           <>
             <LikeComponent
-              onClick={handleLikeClick}
+              onClick={manageLike}
               isLiked={userId && post.likes.includes(userId) ? true : false}
             />
             <div>{likes.length}</div>

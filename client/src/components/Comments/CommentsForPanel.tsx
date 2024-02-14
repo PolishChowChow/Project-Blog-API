@@ -1,17 +1,15 @@
 import { useQuery } from "react-query";
 import { useParams } from "react-router-dom";
 import CommentsList from "./CommentsList";
-import axios from "axios";
 import { CommentType } from "../../types/CommentProps";
 import ErrorMessage from "../StateShowing/ErrorMessage";
 import FormHeader from "../Form/FormHeader";
+import useApiContext from "../../context/useApiContext";
 function CommentsForPanel(){
     const { postId } = useParams();
+    const { getAllComments } = useApiContext()
     const {data: comments} = useQuery<CommentType[]>({
-        queryFn: async() => {
-            const response = await axios.get(`http://localhost:5000/blog/posts/${postId}/comments`)
-            return response.data.comments
-        },
+        queryFn: () => getAllComments(postId),
         queryKey:[`post/${postId}/comments`]
     })
     if(comments === undefined) return <ErrorMessage>No comments founded</ErrorMessage>
