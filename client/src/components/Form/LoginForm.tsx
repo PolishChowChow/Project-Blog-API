@@ -61,8 +61,7 @@ function LoginForm() {
         onChange={onChange}
         type="password"
       />
-      <SubmitButton classNames="w-full">Login</SubmitButton>
-      {isLoading &&  <LoadingCircle />}
+      {isLoading ? <LoadingCircle /> : <SubmitButton classNames="w-full">Login</SubmitButton>}
       {error &&  <ErrorMessage>{error.message}</ErrorMessage>}
     </FormContainer>
     

@@ -21,7 +21,7 @@ const emptyFormData: PostProps = {
 };
 
 function PostForm({ role = "create" }: postFormProps) {
-  const { id: postId } = useParams();
+  const { postId } = useParams();
   const navigate = useNavigate();
   const {
     getPostDataToModify: prefetchEditedPost,
@@ -29,7 +29,7 @@ function PostForm({ role = "create" }: postFormProps) {
     editPost,
   } = useApiContext();
 
-  const { error: fetchError } = useQuery<PostProps, AxiosError>({
+  const { error: fetchError, isLoading: fetchLoading } = useQuery<PostProps, AxiosError>({
     queryKey: ["post", postId],
     queryFn: () => prefetchEditedPost(postId),
     enabled: role === "edit",
@@ -43,8 +43,8 @@ function PostForm({ role = "create" }: postFormProps) {
 
   const {
     mutateAsync: handlePostCreate,
-    isLoading,
-    error,
+    isLoading: isCreateLoading,
+    error: createError,
   } = useMutation<AxiosResponse, AxiosError, PostProps, PostProps>({
     mutationFn: () => createPost(formData),
     onSuccess: () => {
@@ -91,6 +91,7 @@ function PostForm({ role = "create" }: postFormProps) {
       };
     });
   };
+  if(fetchLoading) return <LoadingCircle />
   return (
     <FormContainer onSubmit={handleSubmit}>
       <FormHeader>Create a new Post</FormHeader>
@@ -104,13 +105,12 @@ function PostForm({ role = "create" }: postFormProps) {
         onChange={handleInputChange}
         value={formData.content}
       />
-      <SubmitButton classNames="w-full">
+      {(isEditLoading || isCreateLoading) ? <LoadingCircle /> : <SubmitButton classNames="w-full">
         {role === "edit" ? "Save Changes" : "Add a post"}
-      </SubmitButton>
-      {error && <ErrorMessage>{error.message}</ErrorMessage>}
-      {isLoading && <LoadingCircle />}
+      </SubmitButton>}
+
+      {createError && <ErrorMessage>{createError.message}</ErrorMessage>}
       {editError && <ErrorMessage>{editError.message}</ErrorMessage>}
-      {isEditLoading && <LoadingCircle />}
       {fetchError && <ErrorMessage>{fetchError.message}</ErrorMessage>}
     </FormContainer>
   );

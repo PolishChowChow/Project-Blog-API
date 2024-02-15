@@ -80,8 +80,7 @@ function RegisterForm() {
         value={formData.confirm_password}
         onChange={handleChange}
       />
-      <SubmitButton classNames="w-full">Register</SubmitButton>
-      {isLoading && <LoadingCircle />}
+      {isLoading ? <LoadingCircle /> : <SubmitButton classNames="w-full">Register</SubmitButton>}
       {error && <ErrorMessage />}
     </FormContainer>
   );
